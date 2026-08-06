@@ -1,0 +1,17 @@
+version: '3'
+services:
+  guacd:
+    image: guacamole/guacd:latest
+    container_name: guacd
+    restart: always
+
+  guacamole:
+    image: guacamole/guacamole:latest
+    container_name: guacamole
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      GUACD_HOSTNAME: guacd
+      # Option 1: Using environment variables for simple single-user setup
+      # Option 2: Connect to MySQL/PostgreSQL for full user management

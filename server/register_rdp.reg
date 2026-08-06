@@ -1,0 +1,12 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CLASSES_ROOT\rdp]
+@="URL:Remote Desktop Protocol"
+"URL Protocol"=""
+
+[HKEY_CLASSES_ROOT\rdp\shell]
+
+[HKEY_CLASSES_ROOT\rdp\shell\open]
+
+[HKEY_CLASSES_ROOT\rdp\shell\open\command]
+@="powershell.exe -WindowStyle Hidden -Command \"$ip = '%1' -replace 'rdp://','' -replace '/',''; start-process mstsc.exe -ArgumentList \\\"/v:$ip\\\"\""

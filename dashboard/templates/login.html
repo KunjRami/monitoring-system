@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Scope-2 Monitor — Sign in</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="login-body">
+  <div class="login-card">
+    <div class="login-mark">◈</div>
+    <h1>Scope-2 Monitor</h1>
+    <p class="login-sub">Centralized fleet &amp; browser-health console</p>
+    <form id="loginForm">
+      <label>Username
+        <input type="text" id="username" autocomplete="username" required>
+      </label>
+      <label>Password
+        <input type="password" id="password" autocomplete="current-password" required>
+      </label>
+      <button type="submit">Sign in</button>
+      <p id="loginError" class="login-error" hidden></p>
+    </form>
+  </div>
+<script>
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const username = document.getElementById('username').value;
+  const password = document.getElementById('password').value;
+  const errorEl = document.getElementById('loginError');
+  errorEl.hidden = true;
+  try {
+    const res = await fetch('/api/v1/auth/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({username, password})
+    });
+    if (!res.ok) throw new Error('bad credentials');
+    const data = await res.json();
+    localStorage.setItem('scope2_token', data.access_token);
+    window.location.href = '/';
+  } catch (err) {
+    errorEl.textContent = 'Invalid username or password.';
+    errorEl.hidden = false;
+  }
+});
+</script>
+</body>
+</html>

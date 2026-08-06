@@ -1,0 +1,27 @@
+# Optional convenience compose file for running MongoDB + the server locally.
+# The Monitoring Agent is NOT included here on purpose -- it must run
+# natively on each Windows PC (it reads local OS/window state), not in a
+# container on the server host.
+version: "3.8"
+services:
+  mongodb:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  server:
+    build: ./server
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./server/config.yaml:/app/config.yaml:ro
+      - ./dashboard:/dashboard:ro
+
+volumes:
+  mongo_data:

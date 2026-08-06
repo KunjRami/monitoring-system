@@ -1,0 +1,586 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg-void: #0b0f14;
+  --bg-panel: #121821;
+  --bg-panel-raised: #1a2230;
+  --line: #263041;
+  --text-primary: #e6ecf4;
+  --text-dim: #8a97ab;
+  --accent: #ffb454; /* signal amber -- console accent */
+
+  --status-healthy: #35c47c;
+  --status-logged-out: #e6484f;
+  --status-captcha: #ff9d3d;
+  --status-frozen: #9b6bff;
+  --status-closed: #6b7686;
+  --status-offline: #05070a;
+  --status-unknown: #4fa8ff;
+}
+
+* { box-sizing: border-box; }
+
+/* THE FIX for tabs not closing: the browser's built-in [hidden] rule is
+   low-priority, so any of our own rules that set display:grid/flex on the
+   same element (machines-grid, accounts-panel, alerts-panel, etc.) were
+   silently winning over it -- the JS was correctly setting element.hidden =
+   true on every nav click, but it had no visual effect. This one rule with
+   !important makes hidden always actually hide the element, full stop. */
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  background: var(--bg-void);
+  color: var(--text-primary);
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+
+/* ---------- Login ---------- */
+.login-body {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255,180,84,0.06), transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(79,168,255,0.06), transparent 40%),
+    var(--bg-void);
+}
+.login-card {
+  width: 340px;
+  padding: 40px 32px;
+  background: var(--bg-panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  text-align: center;
+}
+.login-mark { font-size: 28px; color: var(--accent); }
+.login-card h1 { font-family: 'IBM Plex Mono', monospace; font-size: 20px; margin: 8px 0 2px; }
+.login-sub { color: var(--text-dim); font-size: 13px; margin-bottom: 24px; }
+.login-card form { display: flex; flex-direction: column; gap: 14px; text-align: left; }
+.login-card label { font-size: 12px; color: var(--text-dim); display: flex; flex-direction: column; gap: 6px; }
+.login-card input {
+  background: var(--bg-void);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: var(--text-primary);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px;
+}
+.login-card button {
+  margin-top: 6px;
+  background: var(--accent);
+  color: #201202;
+  border: none;
+  border-radius: 6px;
+  padding: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.login-error { color: var(--status-logged-out); font-size: 12px; text-align: center; }
+
+/* ---------- App shell ---------- */
+.app-shell { display: flex; min-height: 100vh; }
+
+.sidebar {
+  width: 220px;
+  background: var(--bg-panel);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  padding: 20px 14px;
+}
+.brand {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 26px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.brand-mark { color: var(--accent); }
+.sidebar nav { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.nav-item {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  text-align: left;
+  padding: 9px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.nav-item:hover { background: var(--bg-panel-raised); color: var(--text-primary); }
+.nav-item.active { background: var(--bg-panel-raised); color: var(--accent); }
+.sidebar-footer button {
+  width: 100%;
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--text-dim);
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.content { flex: 1; padding: 22px 28px; overflow-y: auto; }
+
+.topbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.topbar input, .topbar select {
+  background: var(--bg-panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--text-primary);
+  padding: 8px 10px;
+  font-size: 13px;
+}
+.topbar input { flex: 1; max-width: 280px; }
+.last-refresh { margin-left: auto; font-size: 12px; color: var(--text-dim); font-family: 'IBM Plex Mono', monospace; }
+
+/* ---------- Summary cards (grouped) ---------- */
+.summary-groups { display: flex; flex-direction: column; gap: 16px; margin-bottom: 26px; }
+.summary-group-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.summary-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+.summary-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  user-select: none;
+}
+.summary-card:hover{
+  transform: translateY(-2px);
+  border-color: var(--accent);
+}
+.summary-card.active-summary{
+  border: 2px solid var(--accent) !important;
+  box-shadow: 0 0 12px rgba(255, 180, 84, 0.35);
+  background: var(--bg-panel-raised);
+}
+.summary-card .value {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 24px;
+  font-weight: 600;
+}
+.summary-card .label {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 4px;
+}
+.summary-card.accent-good .value { color: var(--status-healthy); }
+.summary-card.accent-warn .value { color: var(--status-captcha); }
+.summary-card.accent-bad .value { color: var(--status-logged-out); }
+
+/* ---------- Machines grid ---------- */
+.machines-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 14px;
+}
+.machine-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.machine-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.machine-name { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 14px; }
+.machine-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.badge-online { background: rgba(53,196,124,0.15); color: var(--status-healthy); }
+.badge-warning { background: rgba(255,157,61,0.15); color: var(--status-captcha); }
+.badge-offline { background: rgba(230,72,79,0.15); color: var(--status-logged-out); }
+
+.machine-metrics {
+  display: flex;
+  gap: 14px;
+  font-size: 11px;
+  color: var(--text-dim);
+  font-family: 'IBM Plex Mono', monospace;
+  margin-bottom: 10px;
+}
+
+/* Chrome instances are rendered as a real <table> with fixed column widths
+   instead of flex "cards" -- a table guarantees every row is the same
+   height and every column lines up, which flex rows couldn't guarantee once
+   a long/wrapped account name made one row taller than its neighbors. */
+.chrome-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 6px;
+  table-layout: fixed;
+  margin-top: 6px;
+}
+.chrome-table col.col-instance { width: 92px; }
+.chrome-table col.col-status { width: 132px; }
+.chrome-table col.col-account { width: auto; }
+
+.chrome-table tr { background: var(--bg-panel-raised); }
+.chrome-table tr.row-green   { background: rgba(53,196,124,0.14); }
+.chrome-table tr.row-yellow  { background: rgba(245,196,24,0.16); }
+.chrome-table tr.row-red     { background: rgba(230,72,79,0.16); }
+.chrome-table tr.row-neutral { background: rgba(79,168,255,0.08); }
+
+.chrome-table td {
+  padding: 10px 12px;
+  vertical-align: middle;
+}
+.chrome-table td.chrome-label,
+.chrome-table td.chrome-status {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chrome-table td.chrome-account {
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+.chrome-table td:first-child {
+  border-radius: 8px 0 0 8px;
+  border-left: 4px solid var(--line);
+}
+.chrome-table td:last-child { border-radius: 0 8px 8px 0; }
+
+@media (max-width: 480px) {
+  .chrome-table col.col-instance { width: 70px; }
+  .chrome-table col.col-status { width: 96px; }
+  .chrome-table td { padding: 8px 8px; }
+  .chrome-label { font-size: 10px; }
+  .chrome-status { font-size: 12px; }
+  .chrome-account { font-size: 11px; }
+}
+
+.row-green   td:first-child { border-left-color: var(--status-healthy); }
+.row-yellow  td:first-child { border-left-color: #f5c518; }
+.row-red     td:first-child { border-left-color: var(--status-logged-out); }
+.row-neutral td:first-child { border-left-color: var(--status-unknown); }
+
+.chrome-label {
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--text-dim);
+  font-size: 11px;
+}
+.chrome-status { font-weight: 700; font-size: 14px; }
+.row-green  .chrome-status { color: var(--status-healthy); }
+.row-yellow .chrome-status { color: #f5c518; }
+.row-red    .chrome-status { color: var(--status-logged-out); }
+.row-neutral .chrome-status { color: var(--status-unknown); }
+
+.chrome-account {
+  font-size: 13px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+.chrome-account.unknown { color: var(--text-dim); font-style: italic; font-weight: 400; }
+
+/* ---------- Accounts panel ---------- */
+.accounts-panel { display: flex; flex-direction: column; gap: 14px; }
+.accounts-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.accounts-table th {
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-panel-raised);
+}
+.accounts-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+  vertical-align: top;
+}
+.accounts-table tr:last-child td { border-bottom: none; }
+.account-name-cell { font-family: 'IBM Plex Mono', monospace; font-weight: 600; }
+.usage-bar-track {
+  width: 120px;
+  height: 6px;
+  background: var(--bg-void);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.usage-bar-fill { height: 100%; background: var(--accent); }
+.usage-tag {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-left: 8px;
+}
+.tag-highest { background: rgba(230,72,79,0.15); color: var(--status-logged-out); }
+.tag-lowest { background: rgba(53,196,124,0.15); color: var(--status-healthy); }
+.usage-list { color: var(--text-dim); font-size: 11px; font-family: 'IBM Plex Mono', monospace; }
+
+/* ---------- Blinking "offline machine" highlight ---------- */
+/* Chrome-row status is now shown via a persistent color (see row-green /
+   row-yellow / row-red above), not blinking -- that reads more clearly at a
+   glance and avoids any animation-related layout glitches. Kept blinking
+   only at the whole-machine level for "this entire PC went offline", which
+   is rarer and worth being more attention-grabbing about. */
+@keyframes blink-bg {
+  0%, 100% { background-color: transparent; }
+  50% { background-color: rgba(230, 72, 79, 0.22); }
+}
+.machine-card.blink-alert {
+  animation: blink-bg 1.6s ease-in-out infinite;
+  border-color: var(--status-logged-out);
+}
+
+/* ---------- Toast notifications ---------- */
+.toast-container {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 999;
+  max-width: 340px;
+}
+.toast {
+  background: var(--bg-panel-raised);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--status-logged-out);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 13px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  animation: toast-in 0.25s ease-out;
+}
+.toast .toast-title { font-weight: 600; margin-bottom: 2px; }
+.toast .toast-time { color: var(--text-dim); font-size: 11px; font-family: 'IBM Plex Mono', monospace; }
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---------- Settings panel ---------- */
+.settings-panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 20px 24px;
+  max-width: 480px;
+}
+.settings-panel h3 { margin: 0 0 6px; font-size: 15px; }
+.settings-panel p { color: var(--text-dim); font-size: 13px; line-height: 1.6; }
+.settings-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+}
+.settings-row span:last-child { color: var(--text-dim); font-family: 'IBM Plex Mono', monospace; }
+
+/* ---------- Alerts panel ---------- */
+.alerts-panel { display: flex; flex-direction: column; gap: 8px; }
+.alert-row {
+  background: var(--bg-panel);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--status-logged-out);
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+}
+.alert-time { color: var(--text-dim); font-family: 'IBM Plex Mono', monospace; font-size: 11px; }
+
+/* ---------- Available Accounts widget ---------- */
+.available-accounts-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 18px 20px;
+}
+.avail-accounts-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.avail-accounts-title-group { display: flex; align-items: center; gap: 12px; }
+.avail-accounts-title { font-size: 15px; font-weight: 600; }
+.avail-accounts-count {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--text-dim);
+  background: var(--bg-panel-raised);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 3px 10px;
+}
+.avail-refresh-btn {
+  background: var(--bg-panel-raised);
+  border: 1px solid var(--line);
+  color: var(--text-primary);
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.avail-refresh-btn:hover { border-color: var(--accent); }
+.avail-refresh-btn:disabled { opacity: 0.5; cursor: default; }
+
+.avail-accounts-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 6px;
+  table-layout: fixed;
+}
+.avail-accounts-table col.col-name { width: 22%; }
+.avail-accounts-table col.col-phone { width: 18%; }
+.avail-accounts-table col.col-password { width: 20%; }
+.avail-accounts-table col.col-remarks { width: auto; }
+.avail-accounts-table col.col-badge { width: 14%; }
+
+.avail-accounts-table th {
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+  padding: 0 12px 6px;
+}
+.avail-accounts-table td {
+  background: var(--bg-panel-raised);
+  padding: 10px 12px;
+  font-size: 13px;
+  vertical-align: middle;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+.avail-accounts-table td:first-child { border-radius: 8px 0 0 8px; }
+.avail-accounts-table td:last-child { border-radius: 0 8px 8px 0; }
+
+.avail-account-name { font-family: 'IBM Plex Mono', monospace; font-weight: 600; }
+.avail-phone, .avail-password { font-family: 'IBM Plex Mono', monospace; }
+.avail-remarks { color: var(--text-dim); }
+
+.avail-password-toggle {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 11px;
+  cursor: pointer;
+  margin-left: 8px;
+  padding: 0;
+}
+
+.status-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+.status-badge.working { background: rgba(53,196,124,0.18); color: var(--status-healthy); }
+.status-badge.in_use  { background: rgba(245,196,24,0.2); color: #f5c518; }
+.status-badge.expired { background: rgba(230,72,79,0.18); color: var(--status-logged-out); }
+
+.avail-accounts-empty, .avail-accounts-error {
+  padding: 24px 12px;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+.avail-accounts-error { color: var(--status-logged-out); }
+.avail-accounts-error button {
+  margin-top: 10px;
+  background: var(--bg-panel-raised);
+  border: 1px solid var(--line);
+  color: var(--text-primary);
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.avail-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--line);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: avail-spin 0.7s linear infinite;
+  display: inline-block;
+}
+@keyframes avail-spin { to { transform: rotate(360deg); } }
+.avail-loading-row { text-align: center; padding: 24px 12px; color: var(--text-dim); font-size: 13px; }
+
+@media (max-width: 640px) {
+  .avail-accounts-table, .avail-accounts-table thead { display: none; }
+  .avail-accounts-table tbody, .avail-accounts-table tr { display: block; width: 100%; }
+  .avail-accounts-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 0;
+    white-space: normal;
+  }
+  .avail-accounts-table td::before {
+    content: attr(data-label);
+    color: var(--text-dim);
+    font-size: 10px;
+    text-transform: uppercase;
+    margin-right: 10px;
+    flex-shrink: 0;
+  }
+  .avail-accounts-table tr { margin-bottom: 10px; background: var(--bg-panel-raised); border-radius: 8px; display: block; }
+}

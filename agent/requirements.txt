@@ -1,0 +1,9 @@
+psutil==6.0.0
+pymongo==4.9.1
+PyYAML==6.0.2
+pywin32==306; sys_platform == "win32"
+uiautomation==2.0.20; sys_platform == "win32"
+mss==9.0.2
+Pillow==10.4.0
+pytesseract==0.3.13
+python-dateutil==2.9.0.post0

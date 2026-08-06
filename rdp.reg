@@ -1,0 +1,4 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome]
+"AutoLaunchProtocolsFromOrigins"="[{\"allowed_origins\": [\"http://192.168.2.153:8000\", \"*\"], \"protocol\": \"rdp\"}]"

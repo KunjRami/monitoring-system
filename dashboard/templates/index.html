@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scope-2 Monitor</title>
+<!-- ?v=3 is a cache-buster: bump this number any time style.css/dashboard.js
+     change, otherwise browsers can keep serving a stale cached copy and the
+     UI will look "broken" even though the files on disk are correct. -->
+<link rel="stylesheet" href="/static/css/style.css?v=8">
+</head>
+<body>
+  <div id="toastContainer" class="toast-container"></div>
+
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">◈</span> 3639 Amazon Monitoring</div>
+      <nav>
+        <button class="nav-item active" data-view="home">Home</button>
+        <button class="nav-item" data-view="machines">Machines</button>
+        <button class="nav-item" data-view="accounts">Accounts</button>
+        <button class="nav-item" data-view="alerts">Alerts</button>
+        <button class="nav-item" data-view="history">History</button>
+        <button class="nav-item" data-view="settings">Settings</button>
+      </nav>
+      <div class="sidebar-footer">
+        <button id="logoutBtn">Sign out</button>
+      </div>
+    </aside>
+
+    <main class="content">
+      <header class="topbar">
+        <input type="search" id="searchBox" placeholder="Search machines…">
+        <select id="statusFilter">
+          <option value="">All statuses</option>
+          <option value="Online">Online</option>
+          <option value="Warning">Warning</option>
+          <option value="Offline">Offline</option>
+        </select>
+        <select id="sortBy">
+          <option value="machine_name">Sort: Machine name</option>
+          <option value="status">Sort: Status</option>
+        </select>
+        <span class="last-refresh">Updated <span id="lastRefresh">—</span></span>
+      </header>
+
+      <section id="summaryCards" class="summary-groups"></section>
+
+      <section id="machinesGrid" class="machines-grid"></section>
+
+      <section id="accountsPanel" class="accounts-panel" hidden></section>
+
+      <section id="availableAccountsPanel" class="available-accounts-card" hidden></section>
+
+      <section id="alertsPanel" class="alerts-panel" hidden></section>
+
+      <section id="historyPanel" class="alerts-panel" hidden></section>
+
+      <section id="settingsPanel" class="settings-panel" hidden></section>
+    </main>
+  </div>
+
+<script src="/static/js/dashboard.js?v=8"></script>
+</body>
+</html>

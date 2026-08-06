@@ -1,0 +1,32 @@
+# Copy this file to config.yaml and edit for this machine.
+# No values are hardcoded in code -- everything the agent needs comes from here.
+
+machine_name: "PC-01"                 # must be unique per machine
+chrome_instance_count: 5              # how many Chrome instances to expect/report on this PC
+
+mongodb:
+  # Direct connection to the central MongoDB. If you add authentication later,
+  # use the full form: mongodb://<user>:<password>@192.168.2.153:27017/
+  uri: "mongodb://192.168.2.153:27017/"
+  database: "amazon_monitoring"
+  connect_timeout_ms: 5000
+  server_selection_timeout_ms: 5000
+
+intervals:
+  heartbeat_seconds: 30
+  poll_seconds: 15          # how often the agent samples system + Chrome state locally
+  screenshot_seconds: 90    # set to 0 to disable screenshot/OCR checks entirely
+
+detection:
+  use_ocr: true
+  # Needed to read each Chrome window's signed-in account name (and, as a
+  # fallback, page state) without requiring that window to be on screen --
+  # a plain screenshot can only ever see whichever window is foregrounded.
+  # Read-only: only ever calls property getters, never .click()/.set_focus().
+  use_ui_automation: true
+  frozen_cpu_zero_seconds: 120
+  frozen_same_screenshot_samples: 3
+
+monitoring_enabled: true
+log_level: "INFO"
+log_dir: "./logs"

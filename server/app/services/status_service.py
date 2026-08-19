@@ -4,7 +4,7 @@ import time
 import logging
 from typing import Any
 
-from app.database import get_database
+from app.database import get_database, get_database_pending
 from app.config import get_config
 from app.services.alert_service import (
     raise_alert,
@@ -15,28 +15,8 @@ from app.services.alert_service import (
 
 logger = logging.getLogger("server.status_service")
 
-# NOTE: heartbeat ingestion no longer happens via an HTTP endpoint on this
-# server. Agents write directly to MongoDB (see agent/mongo_writer.py) so
-# that they only need outbound reachability to Mongo, not an inbound HTTP
-# connection into this server. This module now only *reads* that data for
-# the dashboard, plus derives alerts from current DB state on each sweep
-# cycle (see sweep_chrome_alerts below), since there's no longer a single
-# ingestion call site to hook alert-raising into.
-
 
 async def purge_old_data() -> dict[str, int]:
-    """
-    Deletes raw heartbeats/status_history older than config.retention.days,
-    and RESOLVED alerts older than the same window. Unresolved alerts are
-    never touched regardless of age -- an ongoing issue shouldn't silently
-    disappear just because it's been open a while. Current live state
-    (the `machines` and `chrome_instances` collections the dashboard
-    actually reads for its main view) is untouched by this entirely; this
-    only prunes history/log-style collections that otherwise grow forever.
-
-    Called once at server startup and then once every 24h (see
-    _purge_loop in app/main.py).
-    """
     cfg = get_config()
     db = get_database()
     cutoff = time.time() - (cfg.retention.days * 24 * 3600)
@@ -64,13 +44,7 @@ async def purge_old_data() -> dict[str, int]:
 
 
 async def sweep_chrome_alerts() -> None:
-    """
-    Background task: scans current chrome_instances state and raises/resolves
-    alerts accordingly. Runs on the same cadence as sweep_offline_machines
-    since alerting no longer happens inline with heartbeat ingestion.
-    """
     db = get_database()
-
     async for instance in db.chrome_instances.find({}):
         machine_name = instance["machine_name"]
         idx = instance["instance_index"]
@@ -92,7 +66,6 @@ async def sweep_chrome_alerts() -> None:
 
 
 async def sweep_offline_machines() -> None:
-    """Background task: mark machines Warning/Offline if heartbeats stop."""
     cfg = get_config()
     db = get_database()
     now = time.time()
@@ -104,7 +77,6 @@ async def sweep_offline_machines() -> None:
     async for machine in db.machines.find({}):
         last = machine.get("last_heartbeat", 0)
         machine_name = machine["machine_name"]
-        new_status = machine.get("status", "Online")
 
         if last < offline_cutoff:
             new_status = "Offline"
@@ -131,7 +103,6 @@ async def sweep_offline_machines() -> None:
 
 async def get_dashboard_summary() -> dict[str, Any]:
     db = get_database()
-
     machines = [m async for m in db.machines.find({})]
     chrome_instances = [c async for c in db.chrome_instances.find({})]
 
@@ -140,16 +111,12 @@ async def get_dashboard_summary() -> dict[str, Any]:
     systems_offline = sum(1 for m in machines if m.get("status") == "Offline")
 
     status_counts = {
-        "Working": 0,
-        "Logged Out": 0,
-        "Not Working_C": 0,
-        "Not Working_F": 0,
-        "Chrome Closed": 0,
-        "Offline": 0,
-        "Unknown": 0,
+        "Working": 0, "Logged Out": 0, "Not Working_C": 0, "Not Working_F": 0,
+        "Chrome Closed": 0, "Offline": 0, "Unknown": 0,
     }
     for c in chrome_instances:
-        status_counts[c.get("status", "Unknown")] = status_counts.get(c.get("status", "Unknown"), 0) + 1
+        key = c.get("status", "Unknown")
+        status_counts[key] = status_counts.get(key, 0) + 1
 
     avg_cpu = round(sum(m.get("cpu_percent", 0) for m in machines) / total_systems, 1) if total_systems else 0.0
     avg_ram = round(sum(m.get("ram_percent", 0) for m in machines) / total_systems, 1) if total_systems else 0.0
@@ -167,4 +134,38 @@ async def get_dashboard_summary() -> dict[str, Any]:
         "average_cpu": avg_cpu,
         "average_ram": avg_ram,
         "unknown_browsers": status_counts.get("Unknown", 0) + status_counts.get("Not Working", 0),
+    }
+
+
+async def get_pending_pagesaves() -> dict[str, Any]:
+    """
+    Reads page-save status counts from the SEPARATE pending-MongoDB deployment
+    (config.pending in config.yaml) -- a totally different connection string
+    than the main monitoring DB. Returns a clear "not configured" result
+    instead of crashing if that section is missing from config.yaml.
+    """
+    cfg = get_config().pending
+    db = get_database_pending()
+    if db is None:
+        return {
+            "configured": False,
+            "total_pagesaves": 0, "pending": 0, "processing": 0, "done": 0,
+        }
+
+    collection = db[cfg.collection]
+    pipeline = [{"$group": {"_id": "$page_save_status", "count": {"$sum": 1}}}]
+    results = await collection.aggregate(pipeline).to_list(None)
+
+    page_save_counts = {"pending": 0, "processing": 0, "done": 0}
+    for item in results:
+        status = str(item["_id"]).strip().lower()
+        if status in page_save_counts:
+            page_save_counts[status] = item["count"]
+
+    return {
+        "configured": True,
+        "total_pagesaves": sum(page_save_counts.values()),
+        "pending": page_save_counts["pending"],
+        "processing": page_save_counts["processing"],
+        "done": page_save_counts["done"],
     }

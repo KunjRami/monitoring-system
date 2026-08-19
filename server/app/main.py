@@ -10,8 +10,19 @@ from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import ensure_indexes
-from app.services.status_service import sweep_offline_machines, sweep_chrome_alerts, purge_old_data
-from app.routers import dashboard, machines, alerts, accounts, auth as auth_router
+from app.services.status_service import (
+    sweep_offline_machines,
+    sweep_chrome_alerts,
+    purge_old_data,
+)
+from app.routers import (
+    dashboard,
+    machines,
+    alerts,
+    accounts,
+    auth as auth_router,
+    pending_counts,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s")
 logger = logging.getLogger("server.main")
@@ -31,9 +42,6 @@ async def _sweep_loop():
 
 
 async def _purge_loop():
-    # Run once immediately on startup too, so an already-piled-up database
-    # gets cleaned up right away instead of waiting up to 24h for the first
-    # scheduled run.
     while True:
         try:
             await purge_old_data()
@@ -67,12 +75,14 @@ app.include_router(dashboard.router)
 app.include_router(machines.router)
 app.include_router(alerts.router)
 app.include_router(accounts.router)
-
+app.include_router(pending_counts.router)
 app.mount("/static", StaticFiles(directory="../dashboard/static"), name="static")
+
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
     return Response(status_code=204)
+
 
 @app.get("/")
 async def root():

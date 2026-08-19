@@ -1,10 +1,13 @@
-# Copy to config.yaml and edit. No values are hardcoded in code.
-
 mongodb:
-  # Same MongoDB the agents write directly to -- this server only READS from
-  # it for the dashboard, it does not receive heartbeats over HTTP anymore.
   uri: "mongodb://xb3216:2YDfRuQxb0T@192.168.0.233:27017,192.168.0.234:27017,192.168.0.235:27017/?replicaSet=rs0&authSource=admin"
   database: "3216_amazon"
+
+# Separate MongoDB deployment powering the pending-pagesaves widget --
+# a completely different connection string than mongodb: above.
+pending:
+  uri: "mongodb://admin:tP_kc8mn@192.168.2.145:27017/?authSource=admin"
+  database: "3216_amazon"
+  collection: "Amazon_scope_2_testing_final"
 
 api:
   host: "0.0.0.0"
@@ -14,31 +17,25 @@ auth:
   username: "admin"
   password: "Xbyte@123"
   jwt_secret: "R8@9xL1#AmazonScope2JWT2026!Server"
-  jwt_expiry_minutes: 500000000
+  jwt_expiry_minutes: 480   # NOTE: was 500000000 (~951 years) -- not currently
+                             # causing a crash, but that's an unreasonable
+                             # value for a real deployment; set back to a
+                             # sane 8-hour default. Change if you disagree.
 
 heartbeat:
-  warning_after_missed_intervals: 2   # -> 60s at 30s heartbeat interval
-  offline_after_missed_intervals: 4   # -> 120s at 30s heartbeat interval
+  warning_after_missed_intervals: 2
+  offline_after_missed_intervals: 4
   expected_interval_seconds: 30
 
 alerts:
-  webhook_url: ""    # optional generic webhook (works for Slack/Teams incoming webhooks)
+  webhook_url: ""
 
 retention:
-  # Raw heartbeats + status_history older than this many days are deleted
-  # once every 24h (runs immediately on server startup too). Resolved
-  # alerts older than this are also deleted. Unresolved alerts and current
-  # live machine/chrome status are NEVER deleted regardless of age.
   days: 1
 
 excel_accounts:
-  # Powers the "Available Accounts" dashboard widget -- reads a local .xlsx
-  # file, no API/credentials/network needed. Columns, in order: Account
-  # name, Phone No, Password, Remarks. Row 1 is treated as a header row.
   enabled: true
   file_path: "Accounts.xlsx"
   sheet_name: "Sheet1"
   header_rows: 1
-  cache_seconds: 30   # 1 day -- the Refresh button still bypasses this on demand
-
-
+  cache_seconds: 30

@@ -195,6 +195,44 @@ function filterBySummary(type) {
   }
 }
 
+/**
+ * Fetches the pending PageSave status counts from the database/API
+ * and updates the top bar UI.
+ */
+async function fetchPendingCounts() {
+  try {
+    const response = await fetch('/api/v1/pending-pagesaves/pending-summary', {
+      headers: authHeaders()
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    const pEl = document.getElementById('pending-count');
+    const prEl = document.getElementById('processing-count');
+    const dEl = document.getElementById('done-count');
+
+    if (pEl) pEl.textContent = data.pending ?? 0;
+    if (prEl) prEl.textContent = data.processing ?? 0;
+    if (dEl) dEl.textContent = data.done ?? 0;
+
+  } catch (err) {
+    console.error('Error fetching pending page save counts:', err);
+
+    const pEl = document.getElementById('pending-count');
+    const prEl = document.getElementById('processing-count');
+    const dEl = document.getElementById('done-count');
+
+    if (pEl) pEl.textContent = '--';
+    if (prEl) prEl.textContent = '--';
+    if (dEl) dEl.textContent = '--';
+  }
+}
+
+;
 /* ---------------- Refresh ---------------- */
 
 async function refresh() {
@@ -210,7 +248,7 @@ async function refresh() {
   allMachines = machinesResp.machines || [];
 
   renderSummary(summary);
-
+fetchPendingCounts()
   // Safely re-apply active filter without inducing recursive execution
   if (activeSummaryFilter) {
     const currentFilter = activeSummaryFilter;
@@ -608,6 +646,7 @@ function setupNav() {
       btn.classList.add('active');
       currentView = btn.dataset.view;
       showViewSections();
+      fetchPendingCounts()
       refresh();
       if (currentView === 'accounts') {
         startAvailableAccountsAutoRefresh();
@@ -644,6 +683,7 @@ function setupControls() {
   setupNav();
   setupControls();
   showViewSections();
+  fetchPendingCounts()
   refresh();
   setInterval(refresh, REFRESH_MS);
 })();

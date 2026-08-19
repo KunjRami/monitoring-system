@@ -14,7 +14,7 @@
 
   <div class="app-shell">
     <aside class="sidebar">
-      <div class="brand"><span class="brand-mark">◈</span> 3639 Amazon Monitoring</div>
+
       <nav>
         <button class="nav-item active" data-view="home">Home</button>
         <button class="nav-item" data-view="machines">Machines</button>
@@ -30,17 +30,14 @@
 
     <main class="content">
       <header class="topbar">
-        <input type="search" id="searchBox" placeholder="Search machines…">
-        <select id="statusFilter">
-          <option value="">All statuses</option>
-          <option value="Online">Online</option>
-          <option value="Warning">Warning</option>
-          <option value="Offline">Offline</option>
-        </select>
-        <select id="sortBy">
-          <option value="machine_name">Sort: Machine name</option>
-          <option value="status">Sort: Status</option>
-        </select>
+      <div class="brand"><span class="brand-mark">◈</span> 3639 Amazon Monitoring</div>
+
+
+<span class="pending-simple-tracker" id="pending-tracker">
+    Pending: <span id="pending-count" class="highlight-count">...</span> |
+    Processing: <span id="processing-count" class="highlight-count">...</span> |
+    Done: <span id="done-count" class="highlight-count">...</span>
+</span>
         <span class="last-refresh">Updated <span id="lastRefresh">—</span></span>
       </header>
 
